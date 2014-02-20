@@ -8,10 +8,11 @@ using ServiceStack;
 
 namespace InventoryWeb.Services
 {
-
+    [Api("Product Service Description")]
+    [Route("/product/{EAN}", "GET", Summary = @"GET Summary", Notes = "GET Notes")]
     public class GetProduct : IReturn<Product>
     {
-        public int? Id { get; set; }
+        [ApiMember(Name = "EAN", Description = "Product EAN", ParameterType = "path", DataType = "string", IsRequired = true)]
         public string EAN { get; set; }
     }
 
@@ -40,9 +41,7 @@ namespace InventoryWeb.Services
 
         public object Get(GetProduct request)
         {
-            var product = request.Id.HasValue
-                ? products.FirstOrDefault(x => x.Id == request.Id.Value)
-                : products.FirstOrDefault(x => x.EAN == request.EAN);
+            var product = products.FirstOrDefault(x => x.EAN == request.EAN);
 
             if (product == null)
                 throw new HttpError(HttpStatusCode.NotFound, "Product does not exist");

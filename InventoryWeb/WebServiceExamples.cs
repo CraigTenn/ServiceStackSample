@@ -5,13 +5,8 @@ using ServiceStack;
 namespace InventoryWeb
 {
     //Request DTO
-    [Api("Hello Service Description")]
-    [Route("/swagger/{Name}", "GET", Summary = @"GET Summary", Notes = "GET Notes")]
-    [Route("/swagger/{Name}", "POST", Summary = @"POST Summary", Notes = "POST Notes")]
     public class Hello
     {
-        [ApiMember(Name = "Name", Description = "Name Description",
-            ParameterType = "path", DataType = "string", IsRequired = true)]
         public string Name { get; set; }
     }
 
@@ -79,11 +74,11 @@ namespace InventoryWeb
             Repository.DeleteByIds(request.Ids);
         }
     }
-
+    
     public class TodoRepository
     {
         List<Todo> todos = new List<Todo>();
-
+        
         public List<Todo> GetByIds(long[] ids)
         {
             return todos.Where(x => ids.Contains(x.Id)).ToList();
@@ -117,21 +112,21 @@ namespace InventoryWeb
     }
 
 
-    /*  Example calling above Service with ServiceStack's C# clients:
+/*  Example calling above Service with ServiceStack's C# clients:
 
-        var client = new JsonServiceClient(BaseUri);
-        List<Todo> all = client.Get(new Todos());           // Count = 0
+    var client = new JsonServiceClient(BaseUri);
+    List<Todo> all = client.Get(new Todos());           // Count = 0
 
-        var todo = client.Post(
-            new Todo { Content = "New TODO", Order = 1 });      // todo.Id = 1
-        all = client.Get(new Todos());                      // Count = 1
+    var todo = client.Post(
+        new Todo { Content = "New TODO", Order = 1 });      // todo.Id = 1
+    all = client.Get(new Todos());                      // Count = 1
 
-        todo.Content = "Updated TODO";
-        todo = client.Put(todo);                            // todo.Content = Updated TODO
+    todo.Content = "Updated TODO";
+    todo = client.Put(todo);                            // todo.Content = Updated TODO
 
-        client.Delete(new Todos(todo.Id));
-        all = client.Get(new Todos());                      // Count = 0
+    client.Delete(new Todos(todo.Id));
+    all = client.Get(new Todos());                      // Count = 0
 
-    */
+*/
 
 }
