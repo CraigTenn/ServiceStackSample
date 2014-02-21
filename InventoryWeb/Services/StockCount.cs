@@ -7,6 +7,11 @@ namespace InventoryWeb.Services
 {
     public class StockCount
     {
+        public StockCount()
+        {
+            RfidEventLog = new EventLog();
+        }
+
         public int StockCountId { get; set; }
 
         public string Description { get; set; }
@@ -14,6 +19,8 @@ namespace InventoryWeb.Services
         public Location Location { get; set; }
 
         public ProductCategory ProductCategory { get; set; }
+
+        public EventLog RfidEventLog { get; set; }
     }
 
     public class Location
@@ -40,6 +47,9 @@ namespace InventoryWeb.Services
     public class StockTake
     {
         public int LocationId { get; set; }
+
+        public WorkArea WorkArea { get; set; }
+
         public List<EpcProduct> ProductIdentifiers { get; set; }
     }
 
@@ -50,12 +60,16 @@ namespace InventoryWeb.Services
 
     public class EventLog
     {
+        public EventLog()
+        {
+            RfidEvents = new List<RfidEvent>();
+        }
         public List<RfidEvent> RfidEvents { get; set; }
     }
 
     public class RfidEvent
     {
-        public Location Location { get; set; }
+        public int LocationId { get; set; }
 
         public WorkArea WorkArea { get; set; }
 

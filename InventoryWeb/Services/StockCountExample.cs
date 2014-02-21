@@ -7,6 +7,7 @@ namespace InventoryWeb.Services
     using System.Net;
 
     using ServiceStack;
+    using ServiceStack.Host;
 
     [Api("Stock Count Service")]
     [Route("/stockcount/{StockCountId}", "GET", Summary = @"Get a stock count by ID", Notes = "GET Notes")]
@@ -37,11 +38,12 @@ namespace InventoryWeb.Services
         public string ProductCategoryCode { get; set; }
     }
 
+
     [Api("Stock Count Service")]
     [Route("/stockcount/take", "POST", Summary = @"Report the RFID tag reads for the stock count", Notes = "Send RFID reads for stock counting")]
     public class ReportStockTake : IReturn
     {
-        [ApiMember(Name = "request", Description = "The location and tags for a stock count", ParameterType = "body", DataType = "StockTake", IsRequired = true)]
+        [ApiMember(Name = "StockTake", Description = "The location and tags for a stock count", ParameterType = "body", DataType = "StockTake", IsRequired = true)]
         public StockTake StockTake { get; set; }
     }
 
@@ -69,10 +71,10 @@ namespace InventoryWeb.Services
 
         public static List<StockCount> inProgressStockCounts = new List<StockCount>
         {
-            new StockCount{ StockCountId = 1, Description = "Baldock - Clothing" },
-            new StockCount{ StockCountId = 2, Description = "Baldock - Menswear" },
-            new StockCount{ StockCountId = 3, Description = "Stevanage - Clothing" },
-            new StockCount{ StockCountId = 4, Description = "Stevanage - Kidswear" }
+            new StockCount{ StockCountId = 1, Description = "Baldock - Clothing", Location = locations[0], ProductCategory = productCategories[0] },
+            new StockCount{ StockCountId = 2, Description = "Baldock - Menswear" , Location = locations[0], ProductCategory = productCategories[6] },
+            new StockCount{ StockCountId = 3, Description = "Stevanage - Clothing", Location = locations[1], ProductCategory = productCategories[0] },
+            new StockCount{ StockCountId = 4, Description = "Stevanage - Boys", Location = locations[1], ProductCategory = productCategories[5] }
         };
     }
 
@@ -100,12 +102,13 @@ namespace InventoryWeb.Services
             {
                 matching = matching.Where(x => x.Location.LocationId == request.LocationId);
             }
+
             if (!string.IsNullOrEmpty(request.CategoryCode))
             {
                 matching = matching.Where(x => x.ProductCategory.CategoryCode == request.CategoryCode);
             }
 
-            return matching.ToList();
+            return matching.Any() ? matching.ToList() : new List<StockCount>();
 
         }
 
@@ -136,8 +139,20 @@ namespace InventoryWeb.Services
 
         public object Post(ReportStockTake request)
         {
-            var matchingStockCounts = Get(new FindStockCount {LocationId = request.StockTake.LocationId});
+            var matching = inProgressStockCounts.AsQueryable();
+            if (request.StockTake.LocationId != null)
+            {
+                matching = matching.Where(x => x.Location.LocationId == request.StockTake.LocationId);
+            }
 
+            var toUpdate = matching.FirstOrDefault();
+            StockCountProvider.inProgressStockCounts.Remove(toUpdate);
+            foreach (var epcProduct in request.StockTake.ProductIdentifiers)
+            {
+                toUpdate.RfidEventLog.RfidEvents.Add(new RfidEvent { LocationId = request.StockTake.LocationId, WorkArea = request.StockTake.WorkArea, TagIdHex = epcProduct.TagIdHex });
+            }
+
+            StockCountProvider.inProgressStockCounts.Add(toUpdate);
             return new HttpResult(0, HttpStatusCode.Accepted);
         }
     }
