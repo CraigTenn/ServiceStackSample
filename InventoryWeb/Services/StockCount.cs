@@ -36,4 +36,36 @@ namespace InventoryWeb.Services
     {
         public List<ProductCategory> ProductCategories { get; set; }
     }
+
+    public class StockTake
+    {
+        public int LocationId { get; set; }
+        public List<EpcProduct> ProductIdentifiers { get; set; }
+    }
+
+    public class EpcProduct
+    {
+        public string TagIdHex { get; set; }
+    }
+
+    public class EventLog
+    {
+        public List<RfidEvent> RfidEvents { get; set; }
+    }
+
+    public class RfidEvent
+    {
+        public Location Location { get; set; }
+
+        public WorkArea WorkArea { get; set; }
+
+        public string TagIdHex { get; set; }
+    }
+
+    public enum WorkArea
+    {
+        Warehouse,
+        Shopfloor,
+        Reserved
+    }
 }
