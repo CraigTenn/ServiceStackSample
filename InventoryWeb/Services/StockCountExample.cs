@@ -21,9 +21,9 @@ namespace InventoryWeb.Services
     [Route("/stockcount", "GET", Summary = @"Find matching stock counts", Notes = "Will find stock counts that match the criteria")]
     public class FindStockCount : IReturn<List<StockCount>>
     {
-        [ApiMember(Name = "Location ID", Description = "A location id for getting stock conts", ParameterType = "query", DataType = "int", IsRequired = false)]
+        [ApiMember(Name = "LocationId", Description = "A location id for getting stock conts", ParameterType = "query", DataType = "int", IsRequired = false)]
         public int? LocationId { get; set; }
-        [ApiMember(Name = "Category Code", Description = "A category code for getting stock counts", ParameterType = "query", DataType = "string", IsRequired = false)]
+        [ApiMember(Name = "CategoryCode", Description = "A category code for getting stock counts", ParameterType = "query", DataType = "string", IsRequired = false)]
         public string CategoryCode { get; set; }
     }
 
@@ -37,8 +37,7 @@ namespace InventoryWeb.Services
         [ApiMember(Name = "ProductCategoryCode", Description = "Product Category for this stock count", ParameterType = "query", DataType = "string", IsRequired = true)]
         public string ProductCategoryCode { get; set; }
     }
-
-
+    
     [Api("Stock Count Service")]
     [Route("/stockcount/take", "POST", Summary = @"Report the RFID tag reads for the stock count", Notes = "Send RFID reads for stock counting")]
     public class ReportStockTake : IReturn
@@ -47,42 +46,11 @@ namespace InventoryWeb.Services
         public StockTake StockTake { get; set; }
     }
 
-    public static class StockCountProvider
-    {
-        public static Location[] locations = new Location[]
-        {
-            new Location { LocationId = 1, Name = "Baldock" },
-            new Location { LocationId = 2, Name = "Stevenage" },
-        };
-
-        public static ProductCategory[] productCategories = new ProductCategory[]
-        {
-            new ProductCategory { CategoryId = 0, CategoryCode = "H7", CategoryName = "Clothing" }, 
-            new ProductCategory { CategoryId = 1, CategoryCode = "H71", CategoryName = "Womens" }, 
-            new ProductCategory { CategoryId = 2, CategoryCode = "H72", CategoryName = "Toddlers" }, 
-            new ProductCategory { CategoryId = 3, CategoryCode = "H73", CategoryName = "Baby" }, 
-            new ProductCategory { CategoryId = 4, CategoryCode = "H74", CategoryName = "Girls" }, 
-            new ProductCategory { CategoryId = 5, CategoryCode = "H75", CategoryName = "Boys" }, 
-            new ProductCategory { CategoryId = 6, CategoryCode = "H76", CategoryName = "Mens" }, 
-            new ProductCategory { CategoryId = 7, CategoryCode = "H77", CategoryName = "Schoolwear" }, 
-            new ProductCategory { CategoryId = 8, CategoryCode = "H78", CategoryName = "Footwear" }, 
-            new ProductCategory { CategoryId = 9, CategoryCode = "H79", CategoryName = "Underwear" }
-        };
-
-        public static List<StockCount> inProgressStockCounts = new List<StockCount>
-        {
-            new StockCount{ StockCountId = 1, Description = "Baldock - Clothing", Location = locations[0], ProductCategory = productCategories[0] },
-            new StockCount{ StockCountId = 2, Description = "Baldock - Menswear" , Location = locations[0], ProductCategory = productCategories[6] },
-            new StockCount{ StockCountId = 3, Description = "Stevanage - Clothing", Location = locations[1], ProductCategory = productCategories[0] },
-            new StockCount{ StockCountId = 4, Description = "Stevanage - Boys", Location = locations[1], ProductCategory = productCategories[5] }
-        };
-    }
-
     public class StockCountService : IService
     {
-        private List<StockCount> inProgressStockCounts = StockCountProvider.inProgressStockCounts;
-        private Location[] locations = StockCountProvider.locations;
-        private ProductCategory[] productCategories = StockCountProvider.productCategories;
+        private List<StockCount> inProgressStockCounts = StockCountProvider.InProgressStockCounts;
+        private Location[] locations = StockCountProvider.Locations;
+        private ProductCategory[] productCategories = StockCountProvider.ProductCategories;
 
         public StockCount Get(GetStockCount request)
         {
@@ -108,7 +76,7 @@ namespace InventoryWeb.Services
                 matching = matching.Where(x => x.ProductCategory.CategoryCode == request.CategoryCode);
             }
 
-            return matching.Any() ? matching.ToList() : new List<StockCount>();
+            return matching.ToList();
 
         }
 
@@ -132,7 +100,7 @@ namespace InventoryWeb.Services
                                                   Description = string.Format("{0} - {1}", location.Name, category.CategoryName)
                                               };
                 inProgressStockCounts.Add(newStockCount);
-                StockCountProvider.inProgressStockCounts.Add(newStockCount);
+                StockCountProvider.InProgressStockCounts.Add(newStockCount);
                 return new HttpResult(newStockCount.StockCountId, HttpStatusCode.Accepted);
             }
         }
@@ -146,14 +114,45 @@ namespace InventoryWeb.Services
             }
 
             var toUpdate = matching.FirstOrDefault();
-            StockCountProvider.inProgressStockCounts.Remove(toUpdate);
+            StockCountProvider.InProgressStockCounts.Remove(toUpdate);
             foreach (var epcProduct in request.StockTake.ProductIdentifiers)
             {
                 toUpdate.RfidEventLog.RfidEvents.Add(new RfidEvent { LocationId = request.StockTake.LocationId, WorkArea = request.StockTake.WorkArea, TagIdHex = epcProduct.TagIdHex });
             }
 
-            StockCountProvider.inProgressStockCounts.Add(toUpdate);
+            StockCountProvider.InProgressStockCounts.Add(toUpdate);
             return new HttpResult(0, HttpStatusCode.Accepted);
         }
+    }
+
+    public static class StockCountProvider
+    {
+        public static Location[] Locations = new Location[]
+        {
+            new Location { LocationId = 1, Name = "Baldock" },
+            new Location { LocationId = 2, Name = "Stevenage" },
+        };
+
+        public static ProductCategory[] ProductCategories = new ProductCategory[]
+        {
+            new ProductCategory { CategoryId = 0, CategoryCode = "H7", CategoryName = "Clothing" }, 
+            new ProductCategory { CategoryId = 1, CategoryCode = "H71", CategoryName = "Womens" }, 
+            new ProductCategory { CategoryId = 2, CategoryCode = "H72", CategoryName = "Toddlers" }, 
+            new ProductCategory { CategoryId = 3, CategoryCode = "H73", CategoryName = "Baby" }, 
+            new ProductCategory { CategoryId = 4, CategoryCode = "H74", CategoryName = "Girls" }, 
+            new ProductCategory { CategoryId = 5, CategoryCode = "H75", CategoryName = "Boys" }, 
+            new ProductCategory { CategoryId = 6, CategoryCode = "H76", CategoryName = "Mens" }, 
+            new ProductCategory { CategoryId = 7, CategoryCode = "H77", CategoryName = "Schoolwear" }, 
+            new ProductCategory { CategoryId = 8, CategoryCode = "H78", CategoryName = "Footwear" }, 
+            new ProductCategory { CategoryId = 9, CategoryCode = "H79", CategoryName = "Underwear" }
+        };
+
+        public static List<StockCount> InProgressStockCounts = new List<StockCount>
+        {
+            new StockCount { StockCountId = 1, Description = "Baldock - Clothing", Location = Locations[0], ProductCategory = ProductCategories[0] },
+            new StockCount { StockCountId = 2, Description = "Baldock - Menswear", Location = Locations[0], ProductCategory = ProductCategories[6] },
+            new StockCount { StockCountId = 3, Description = "Stevanage - Clothing", Location = Locations[1], ProductCategory = ProductCategories[0] },
+            new StockCount { StockCountId = 4, Description = "Stevanage - Boys", Location = Locations[1], ProductCategory = ProductCategories[5] }
+        };
     }
 }
